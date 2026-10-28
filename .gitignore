@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest & testing caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments & virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Scratch & temporary workspace files
+scratch/
+*.tmp
+*.log
+
+# Streamlit secrets (keep config.toml, ignore secrets if created)
+.streamlit/secrets.toml
+
+# IDE & Editor settings
+.vscode/
+.idea/
+
+# Operating System metadata
+.DS_Store
+Thumbs.db
+desktop.ini
