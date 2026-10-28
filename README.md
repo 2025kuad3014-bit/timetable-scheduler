@@ -83,44 +83,44 @@ The codebase is built on strict software engineering principles:
 
 ```mermaid
 graph TB
-    subgraph Data Ingestion & Validation Layer
-        D1["Raw JSON File<br/>(small, medium, large, test_dept)"] --> L1["loader.py<br/>load_json() / parse_dataset()"]
-        D2["Multi-CSV Directory<br/>(classes, rooms, subjects, teachers)"] --> L2["loader.py<br/>load_csv_set()"]
-        L1 --> DS["models.Dataset<br/>(Typed Dataclass Model)"]
+    subgraph Data Ingestion and Validation Layer
+        D1["Raw JSON File (small, medium, large, test_dept)"] --> L1["loader.py: load_json() / parse_dataset()"]
+        D2["Multi-CSV Directory (classes, rooms, subjects, teachers)"] --> L2["loader.py: load_csv_set()"]
+        L1 --> DS["models.Dataset (Typed Dataclass Model)"]
         L2 --> DS
-        DS --> V1["validator.py<br/>validate_dataset()"]
-        V1 -->|Structural Checks & Solvability Theorems| V_DEC{"Is Dataset<br/>Solvable?"}
-        V_DEC -->|Fatal Errors| ERR["Halt & Display Actionable<br/>Capacity / Hour Diagnostics"]
-        V_DEC -->|Valid| TA["teacher_assign.py<br/>assign_teachers_and_create_sessions()"]
+        DS --> V1["validator.py: validate_dataset()"]
+        V1 -->|Structural Checks and Solvability| V_DEC{"Is Dataset Solvable?"}
+        V_DEC -->|Fatal Errors| ERR["Halt with Diagnostic Errors"]
+        V_DEC -->|Valid| TA["teacher_assign.py: assign_teachers_and_create_sessions()"]
     end
 
     subgraph CSP Modeling Layer
-        TA --> SESS["Session Variables (X)<br/>Theory (block=1) / Lab (block=2)"]
-        SESS --> CSP_D["csp.py<br/>build_domains()"]
-        SESS --> CSP_G["csp.py<br/>build_constraint_graph()"]
+        TA --> SESS["Session Variables (X): Theory (block=1) / Lab (block=2)"]
+        SESS --> CSP_D["csp.py: build_domains()"]
+        SESS --> CSP_G["csp.py: build_constraint_graph()"]
         CSP_D -->|Unary Pruning: Capacity, Type, Unavail, Lunch| DOMAINS["Pruned Domains (D)"]
         CSP_G -->|Binary Conflict Edges: H1, H2, H3| GRAPH["Constraint Graph Neighbors"]
     end
 
-    subgraph Core AI & Optimization Engine
-        DOMAINS & GRAPH --> S_ROUTER{"Solver Router<br/>(SolverConfig)"}
-        S_ROUTER -->|Tree Search| BT["backtracking.py<br/>MRV + Degree + LCV + FC + AC-3"]
-        S_ROUTER -->|Local Repair| MC["min_conflicts.py<br/>Random Walk + Restarts"]
-        S_ROUTER -->|Two-Phase Exact+Meta| HYB["hybrid.py<br/>Phase 1: BT (H=0) ➔ Phase 2: SA (S➔0)"]
-        S_ROUTER -->|Probabilistic Metaheuristic| SA["annealing.py<br/>Metropolis Cooling Schedule"]
-        S_ROUTER -->|Greedy Baseline| HC["hill_climbing.py<br/>Steepest Ascent + Restarts"]
+    subgraph Core AI and Optimization Engine
+        DOMAINS & GRAPH --> S_ROUTER{"Solver Router (SolverConfig)"}
+        S_ROUTER -->|Tree Search| BT["backtracking.py: MRV + Degree + LCV + FC + AC-3"]
+        S_ROUTER -->|Local Repair| MC["min_conflicts.py: Random Walk + Restarts"]
+        S_ROUTER -->|Two-Phase Exact+Meta| HYB["hybrid.py: Phase 1 BT (H=0) to Phase 2 SA (S=0)"]
+        S_ROUTER -->|Probabilistic Metaheuristic| SA["annealing.py: Metropolis Cooling Schedule"]
+        S_ROUTER -->|Greedy Baseline| HC["hill_climbing.py: Steepest Ascent + Restarts"]
     end
 
-    subgraph Constraint & Evaluation Subsystem
-        BT & MC & HYB & SA & HC <--> FO["FastOccupancy Tracker<br/>O(1) Spatial-Temporal Counter Matrix"]
-        FO <--> CONST["constraints.py<br/>count_violations() & compute_cost()<br/>Hard: H1-H9 | Soft: S1-S5"]
+    subgraph Constraint and Evaluation Subsystem
+        BT & MC & HYB & SA & HC --> FO["FastOccupancy Tracker: O(1) Spatial-Temporal Counter Matrix"]
+        FO --> CONST["constraints.py: count_violations() and compute_cost()"]
     end
 
-    subgraph Output & Presentation Layer
-        BT & MC & HYB & SA & HC --> RES["models.Result & models.Timetable"]
-        RES --> ST_APP["app.py (Streamlit Web Interface)<br/>7 Interactive Views & Dashboards"]
-        RES --> EXP["exporters.py<br/>Multi-Sheet Excel | PDF Report | Raw CSV"]
-        RES --> EXP_CLI["experiments.py<br/>CLI Benchmarks | Ablation Charts"]
+    subgraph Output and Presentation Layer
+        BT & MC & HYB & SA & HC --> RES["models.Result and models.Timetable"]
+        RES --> ST_APP["app.py (Streamlit Web Interface)"]
+        RES --> EXP["exporters.py: Multi-Sheet Excel / PDF Report / CSV"]
+        RES --> EXP_CLI["experiments.py: CLI Benchmarks and Ablation Charts"]
     end
 ```
 
@@ -143,27 +143,27 @@ sequenceDiagram
     participant Const as constraints.py / FastOccupancy
     participant Export as exporters.py
 
-    User->>UI: Select Benchmark or Upload Dataset (JSON/CSV)
+    User->>UI: Select Benchmark or Upload Dataset (JSON or CSV)
     UI->>Loader: Parse raw file inputs
     Loader-->>UI: Return typed Dataset object
     UI->>Val: validate_dataset(dataset)
-    Note over Val: Verify structural integrity,<br/>class hours vs available slots,<br/>room capacity & teacher workload
+    Note over Val: Structural checks and capacity verification
     Val-->>UI: Return (errors, warnings)
 
     alt Fatal Solvability Errors Found
-        UI-->>User: Display detailed error diagnostics & abort
+        UI-->>User: Display error diagnostics and abort
     else Solvability Confirmed
         UI->>Assign: assign_teachers_and_create_sessions(dataset)
-        Note over Assign: Greedy load balancing among eligible faculty;<br/>create Session variables with block_size
+        Note over Assign: Greedy load balancing and session variable creation
         Assign-->>UI: Instantiated Session list
 
-        User->>UI: Select Solver & Heuristic Toggles -> Click "Generate"
-        UI->>CSP: build_domains(dataset) & build_constraint_graph(dataset)
-        Note over CSP: Unary pruning removes room/type/availability mismatches
-        CSP-->>Solver: Initialized Domains & Constraint Graph
+        User->>UI: Select Solver and Heuristics -> Click Generate
+        UI->>CSP: build_domains(dataset) and build_constraint_graph(dataset)
+        Note over CSP: Unary pruning removes invalid slots
+        CSP-->>Solver: Initialized Domains and Constraint Graph
 
         UI->>Solver: solve_*(dataset, config)
-        loop Solving & Conflict Evaluation
+        loop Solving and Conflict Evaluation
             Solver->>Const: count_conflicts(session, slot, room)
             Const-->>Solver: O(1) conflict counts via FastOccupancy
         end
@@ -187,11 +187,11 @@ $$\mathcal{P} = \langle X, D, C \rangle$$
 * **Variables ($X$)**:
   $$X = \{S_1, S_2, \dots, S_N\}$$
   Each variable $S_i$ represents an indivisible teaching requirement:
-  $$S_i = \langle \text{class}(S_i), \text{subject}(S_i), \text{teacher}(S_i), \text{index}(S_i), \text{block\_size}(S_i) \rangle$$
-  For theory lectures, $\text{block\_size} = 1$. For lab sessions in block mode, $\text{block\_size} = 2$.
+  $$S_i = \langle \mathrm{class}(S_i), \mathrm{subject}(S_i), \mathrm{teacher}(S_i), \mathrm{index}(S_i), b(S_i) \rangle$$
+  where $b(S_i) \in \{1, 2\}$ represents the session block duration ($b = 1$ for theory, $b = 2$ for lab).
 * **Domains ($D$)**:
   For each variable $S_i$, its domain $D(S_i)$ is the set of legal start slot coordinates:
-  $$D(S_i) \subseteq \{ (d, p, r) \mid 0 \le d < \text{days},\, 0 \le p < \text{periods},\, r \in \text{Rooms} \}$$
+  $$D(S_i) \subseteq \{ (d, p, r) \mid 0 \le d < \mathrm{days},\, 0 \le p < \mathrm{periods},\, r \in \mathrm{Rooms} \}$$
   Pruned during domain generation by unary constraints.
 * **Constraints ($C$)**:
   Partitioned into **Hard Constraints ($H$)** that define feasibility and **Soft Constraints ($S$)** that define quality.
@@ -214,29 +214,29 @@ $$\mathcal{P} = \langle X, D, C \rangle$$
 │  H5  │ Room Type Match      │ Labs in lab rooms; Theory in classrooms  │
 │  H6  │ Teacher Availability │ Sessions cannot use unavailable slots    │
 │  H7  │ Weekly Contact Hours │ Assigned weekly hours == required hours  │
-│  H8  │ Teacher Workload     │ Assigned load <= faculty max_weekly_load │
+│  H8  │ Teacher Workload     │ Assigned load <= faculty max load        │
 │  H9  │ Lunch Break Slot     │ Class cannot have lectures during lunch  │
 └──────┴──────────────────────┴──────────────────────────────────────────┘
 ```
 
 1. **$H_1$ — Teacher Clash**:
-   $$\forall S_i, S_j \, (i \neq j): \text{teacher}(S_i) = \text{teacher}(S_j) \implies \text{Slots}(S_i) \cap \text{Slots}(S_j) = \emptyset$$
+   $$\forall S_i, S_j \, (i \neq j): \mathrm{teacher}(S_i) = \mathrm{teacher}(S_j) \implies \mathrm{Slots}(S_i) \cap \mathrm{Slots}(S_j) = \emptyset$$
 2. **$H_2$ — Class Clash**:
-   $$\forall S_i, S_j \, (i \neq j): \text{class}(S_i) = \text{class}(S_j) \implies \text{Slots}(S_i) \cap \text{Slots}(S_j) = \emptyset$$
+   $$\forall S_i, S_j \, (i \neq j): \mathrm{class}(S_i) = \mathrm{class}(S_j) \implies \mathrm{Slots}(S_i) \cap \mathrm{Slots}(S_j) = \emptyset$$
 3. **$H_3$ — Room Clash**:
-   $$\forall S_i, S_j \, (i \neq j): \text{room}(S_i) = \text{room}(S_j) \implies \text{Slots}(S_i) \cap \text{Slots}(S_j) = \emptyset$$
+   $$\forall S_i, S_j \, (i \neq j): \mathrm{room}(S_i) = \mathrm{room}(S_j) \implies \mathrm{Slots}(S_i) \cap \mathrm{Slots}(S_j) = \emptyset$$
 4. **$H_4$ — Room Capacity**:
-   $$\forall S_i: \text{Capacity}(\text{room}(S_i)) \ge \text{Strength}(\text{class}(S_i))$$
+   $$\forall S_i: \mathrm{Capacity}(\mathrm{room}(S_i)) \ge \mathrm{Strength}(\mathrm{class}(S_i))$$
 5. **$H_5$ — Room Type Matching**:
-   $$\forall S_i: \text{Type}(\text{room}(S_i)) = \text{Type}(\text{subject}(S_i))$$
+   $$\forall S_i: \mathrm{Type}(\mathrm{room}(S_i)) = \mathrm{Type}(\mathrm{subject}(S_i))$$
 6. **$H_6$ — Teacher Availability**:
-   $$\forall S_i: \text{Slots}(S_i) \cap \text{Unavailable}(\text{teacher}(S_i)) = \emptyset$$
+   $$\forall S_i: \mathrm{Slots}(S_i) \cap \mathrm{Unavailable}(\mathrm{teacher}(S_i)) = \emptyset$$
 7. **$H_7$ — Weekly Contact Hours**:
-   $$\forall c, s: \sum_{S_i \in \text{Sessions}(c, s)} \text{block\_size}(S_i) = \text{WeeklyHours}(s)$$
+   $$\forall c, s: \sum_{S_i \in \mathrm{Sessions}(c, s)} b(S_i) = \mathrm{WeeklyHours}(s)$$
 8. **$H_8$ — Teacher Workload Cap**:
-   $$\forall t: \sum_{S_i \in \text{Sessions}(t)} \text{block\_size}(S_i) \le \text{MaxWeeklyLoad}(t)$$
+   $$\forall t: \sum_{S_i \in \mathrm{Sessions}(t)} b(S_i) \le \mathrm{MaxLoad}(t)$$
 9. **$H_9$ — Lunch Break Protection**:
-   $$\forall S_i: \text{Slots}(S_i) \cap \{(d, \text{Lunch}(\text{class}(S_i)))\} = \emptyset$$
+   $$\forall S_i: \mathrm{Slots}(S_i) \cap \{(d, \mathrm{Lunch}(\mathrm{class}(S_i)))\} = \emptyset$$
 
 ---
 
@@ -256,7 +256,7 @@ $$\mathcal{P} = \langle X, D, C \rangle$$
 
 ### Global Cost Function
 The objective function evaluates the total penalty of any complete or partial timetable:
-$$\mathcal{C}(\text{Timetable}) = 1000 \times \sum_{k=1}^9 |\text{violations}(H_k)| + \sum_{m=1}^5 w_m \times |\text{violations}(S_m)|$$
+$$\mathcal{C}(\mathrm{Timetable}) = 1000 \times \sum_{k=1}^9 |\mathrm{violations}(H_k)| + \sum_{m=1}^5 w_m \times |\mathrm{violations}(S_m)|$$
 * **Hard Feasibility Criterion**: A timetable is strictly valid and feasible if and only if $\mathcal{C} < 1000$ (which guarantees zero hard violations).
 
 ---
@@ -336,8 +336,8 @@ Probabilistic local search for unconstrained or soft optimization:
   2. *Swap*: Exchange slots between two assigned sessions.
   3. *Room Switch*: Change only the room for a session at the same day and period.
 * **Acceptance Rule (Metropolis Criterion)**:
-  $$\Delta \mathcal{C} = \mathcal{C}_{\text{new}} - \mathcal{C}_{\text{current}}$$
-  $$\text{Probability} = \begin{cases} 1 & \text{if } \Delta \mathcal{C} \le 0 \\ \exp\left(-\frac{\Delta \mathcal{C}}{T}\right) & \text{if } \Delta \mathcal{C} > 0 \end{cases}$$
+  $$\Delta \mathcal{C} = \mathcal{C}_{\mathrm{new}} - \mathcal{C}_{\mathrm{current}}$$
+  $$P(\mathrm{accept}) = \min\left(1, \; \exp\left(-\frac{\Delta \mathcal{C}}{T}\right)\right)$$
 * **Geometric Cooling**: $T_{k+1} = \alpha \cdot T_k$ with $\alpha = 0.995$.
 
 ---
@@ -368,7 +368,7 @@ erDiagram
         string code PK
         string name
         int weekly_hours
-        string subject_type "theory | lab"
+        string subject_type
     }
     TEACHER {
         string name PK
@@ -386,7 +386,7 @@ erDiagram
     ROOM {
         string name PK
         int capacity
-        string room_type "classroom | lab"
+        string room_type
     }
     TIME_STRUCTURE {
         int working_days
@@ -401,7 +401,7 @@ erDiagram
         int block_size
     }
     TIMETABLE {
-        dict assignment "Session -> (Day, Period, Room)"
+        dict assignment
         set locked_sessions
     }
 ```
